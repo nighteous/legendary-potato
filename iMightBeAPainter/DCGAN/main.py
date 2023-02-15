@@ -9,6 +9,7 @@ from dataset import Monet_Dataset
 
 # Settings
 BATCH_SIZE = 32
+LATENT_SIZE = 256
 LEARNING_RATE = 2e-4
 EPOCHS = 10
 DEVICE = "cuda" if torch.cuda.is_available() else "cpu"
@@ -34,6 +35,32 @@ def train_dis(model: DCGAN, opt, real_image):
 
     # Predicting fake images
     latent = torch.randn(BATCH_SIZE, LATENT_SIZE, 1, 1).to(DEVICE)
+    fake_images = model.gen_forward(latent)
+    fake_targets = torch.zeros(fake_images.size(0), 1).to(DEVICE)
+    fake_preds = model.dis_forward(fake_images)
+    fake_loss = torch.nn.functional.binary_cross_entropy(fake_preds, fake_targets)
+    fake_scores = torch.mean(fake_preds).item()
+
+    loss = real_loss + fake_loss
+    loss.backward()
+    opt.step()
+
+    return loss.item(), real_scores, fake_scores
+
+def train_gen(model: DCGAN, opt):
+    opt.zero_grad()
+
+    latent = torch.randn(BATCH_SIZE, LATENT_SIZE, 1, 1, device=DEVICE)
+    fake_images = model.gen_forward(latent)
+
+    preds = model.dis_forward(fake_images)
+    targets = torch.ones(BATCH_SIZE, 1).to(DEVICE)
+    loss = torch.nn.functional.binary_cross_entropy(preds, targets)
+
+    loss.backward()
+    opt.step()
+
+    return loss.item()
 
 
 def fit(model: DCGAN, train_loader: DataLoader):
@@ -49,6 +76,9 @@ def fit(model: DCGAN, train_loader: DataLoader):
     for epoch in tqdm(range(EPOCHS)):
         for real_images in train_loader:
             # Training discriminator
+            loss_d, real_score, fake_score = train_dis(model, opt_d, real_images)
+            # Training generator
+
 
 
 def main():
