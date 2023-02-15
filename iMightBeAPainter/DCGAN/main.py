@@ -62,8 +62,9 @@ def train_gen(model: DCGAN, opt):
 
     return loss.item()
 
-
 def fit(model: DCGAN, train_loader: DataLoader):
+
+    loss_d, real_score, fake_score, loss_g = None, None, None, None
 
     losses_d = []
     losses_g = []
@@ -78,7 +79,16 @@ def fit(model: DCGAN, train_loader: DataLoader):
             # Training discriminator
             loss_d, real_score, fake_score = train_dis(model, opt_d, real_images)
             # Training generator
+            loss_g = train_gen(model, opt_g)
 
+        losses_g.append(loss_g)
+        losses_d.append(loss_d)
+        real_scores.append(real_score)
+        fake_scores.append(fake_score)
+
+        print("Epoch [{}/{}], loss_g: {:.4f}, loss_d: {:.4f}, real_score: {:.4f}, fake_score: {:.4f}".format(epoch+1, EPOCHS, loss_g, loss_d, real_score, fake_score))
+
+    return losses_d, losses_g, real_scores, fake_scores
 
 
 def main():
