@@ -1,51 +1,67 @@
-import argparse
 from tqdm import tqdm
 
 import torch
-from torch.utils.data import DataLoader
+import torch.optim as optim
+from torch.utils.data import DataLoader, random_split
 
 from dcgan import DCGAN
 from dataset import Monet_Dataset
 
-def arguments():
-    parser = argparse.ArgumentParser()
+# Settings
+BATCH_SIZE = 32
+LEARNING_RATE = 2e-4
+EPOCHS = 10
+DEVICE = "cuda" if torch.cuda.is_available() else "cpu"
 
-    # Defining options/training settings
-    parser.add_argument("-bs", "--batch-size", metavar="batch_size", default=32, help="Batch Size for Loader.\nDefault batch_size = 32")
-    parser.add_argument("--split-size", metavar="split_size", default=0.8, help="Split size of dataset into training and testing.\nDefault split_size=0.8")
-    parser.add_argument("--device", metavar="device", default="cuda", help="device to run training and model on.\nDefault device = cuda")
-    parser.add_argument("--epochs", metavar="epochs", default=10, help="Number of epochs.\nDefault epochs = 10")
-    args = parser.parse_args()
 
-    return args
 
 def split_dataset(full_dataset, split_size = 0.8):
     train_size = int(split_size * len(full_dataset))
     test_size = len(full_dataset) - train_size
-    train_dataset, test_dataset = torch.utils.data.random_split(full_dataset, [train_size, test_size])
+    train_dataset, test_dataset = random_split(full_dataset, [train_size, test_size])
 
     return train_dataset, test_dataset
 
-def train_generator(model, train_loader, args):
-    epochs = args.epochs
+def train_dis(model: DCGAN, opt, real_image):
 
-    for epoch in range(epochs):
-        for _, img in tqdm(enumerate(train_loader)):
+    # Predicting real images
+    opt.zero_grad()
+    real_image = real_image.to(DEVICE)
+    real_preds = model.dis_forward(real_image)
+    real_targets = torch.ones(real_image.size(0), 1).to(DEVICE)
+    real_loss = torch.nn.functional.binary_cross_entropy(real_preds, real_targets)
+    real_scores = torch.mean(real_preds).item()
+
+    # Predicting fake images
+    latent = torch.randn(BATCH_SIZE, LATENT_SIZE, 1, 1).to(DEVICE)
+
+
+def fit(model: DCGAN, train_loader: DataLoader):
+
+    losses_d = []
+    losses_g = []
+    real_scores = []
+    fake_scores = []
+
+    opt_d = optim.Adam(model.discriminator.parameters(), lr = LEARNING_RATE, betas=(0.5, 0.999))
+    opt_g = optim.Adam(model.generator.parameters(), lr = LEARNING_RATE, betas=(0.5, 0.999))
+
+    for epoch in tqdm(range(EPOCHS)):
+        for real_images in train_loader:
+            # Training discriminator
 
 
 def main():
-    # Split dataset into train and test
-    args = arguments()
 
-    dataset = Monet_Dataset()
-    train_dataset, test_dataset = split_dataset(dataset, args.split_size)
+    full_dataset = Monet_Dataset()
+    train_dataset, test_dataset = split_dataset(full_dataset)
 
-    train_loader = DataLoader(train_dataset, batch_size=args.batch_size, shuffle=True)
-    test_loader = DataLoader(test_dataset, batch_size=args.batch_size, shuffle=True)
+    train_loader = DataLoader(train_dataset, batch_size=BATCH_SIZE, shuffle=True)
+    test_loader = DataLoader(test_dataset, batch_size=BATCH_SIZE, shuffle=True)
 
-    model = DCGAN().to(args.device)
+    model = DCGAN().to(DEVICE)
 
-    train_generator(model, train_loader, args)
+    fit(model, train_loader)
 
-if __name__ == "__main__":
-    main()
+
+main()
