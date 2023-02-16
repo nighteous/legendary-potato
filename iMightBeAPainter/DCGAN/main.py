@@ -98,13 +98,13 @@ def main():
         transforms.ToTensor(),
     ])
 
-    full_dataset = Monet_Dataset(transform=transform)
+    full_dataset = Monet_Dataset(transform=None)
     train_dataset, test_dataset = split_dataset(full_dataset)
 
     train_loader = DataLoader(train_dataset, batch_size=BATCH_SIZE, shuffle=True)
     test_loader = DataLoader(test_dataset, batch_size=BATCH_SIZE, shuffle=True)
 
-    model = DCGAN().to(DEVICE)
+    model = DCGAN(num_feat_map = 256).to(DEVICE)
     print(model)
 
     history = fit(model, train_loader)

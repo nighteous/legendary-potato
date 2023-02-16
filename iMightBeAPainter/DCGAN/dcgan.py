@@ -38,7 +38,7 @@ class DownBlock(nn.Module):
         return x
 
 
-class Fuddi_Gan(nn.Module):
+class DCGAN(nn.Module):
     def __init__(self,
                  latent_dim = 256,
                  num_feat_map = 64,
@@ -86,7 +86,7 @@ class Fuddi_Gan(nn.Module):
 
         return img
 
-class DCGAN(torch.nn.Module):
+class COLAB_DCGAN(torch.nn.Module):
 
     def __init__(self, latent_dim=256,
                  num_feat_maps_gen=64, num_feat_maps_dis=64,
