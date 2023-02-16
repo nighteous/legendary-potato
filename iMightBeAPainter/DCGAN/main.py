@@ -3,6 +3,7 @@ from tqdm import tqdm
 import torch
 import torch.optim as optim
 from torch.utils.data import DataLoader, random_split
+from torchvision import transforms
 
 from dcgan import DCGAN
 from dataset import Monet_Dataset
@@ -74,8 +75,8 @@ def fit(model: DCGAN, train_loader: DataLoader):
     opt_d = optim.Adam(model.discriminator.parameters(), lr = LEARNING_RATE, betas=(0.5, 0.999))
     opt_g = optim.Adam(model.generator.parameters(), lr = LEARNING_RATE, betas=(0.5, 0.999))
 
-    for epoch in tqdm(range(EPOCHS)):
-        for real_images in train_loader:
+    for epoch in range(EPOCHS):
+        for real_images in tqdm(train_loader):
             # Training discriminator
             loss_d, real_score, fake_score = train_dis(model, opt_d, real_images)
             # Training generator
@@ -92,16 +93,22 @@ def fit(model: DCGAN, train_loader: DataLoader):
 
 
 def main():
+    transform = transforms.Compose([
+        transforms.Resize((64,64)),
+        transforms.ToTensor(),
+    ])
 
-    full_dataset = Monet_Dataset()
+    full_dataset = Monet_Dataset(transform=transform)
     train_dataset, test_dataset = split_dataset(full_dataset)
 
     train_loader = DataLoader(train_dataset, batch_size=BATCH_SIZE, shuffle=True)
     test_loader = DataLoader(test_dataset, batch_size=BATCH_SIZE, shuffle=True)
 
     model = DCGAN().to(DEVICE)
+    print(model)
 
-    fit(model, train_loader)
+    history = fit(model, train_loader)
 
 
-main()
+if __name__ == "__main__":
+    main()
