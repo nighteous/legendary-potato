@@ -1,6 +1,12 @@
-*.jpg
 *.png
+*.jpg
 *.jpeg
+.vscode/
+
+*.pyc
+__pycache__/
+
+dataset/
 
 # remove weights
 *.pth*
